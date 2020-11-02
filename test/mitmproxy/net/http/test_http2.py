@@ -1,10 +1,9 @@
 import pytest
 import codecs
 from io import BytesIO
-import hyperframe.frame
 
 from mitmproxy import exceptions
-from mitmproxy.net.http.http2 import read_raw_frame, parse_frame
+from mitmproxy.net.http.http2 import read_raw_frame
 
 
 def test_read_raw_frame():
@@ -24,18 +23,3 @@ def test_read_raw_frame_failed():
 
     with pytest.raises(exceptions.HttpException):
         read_raw_frame(bio)
-
-
-def test_parse_frame():
-    f = parse_frame(
-        codecs.decode('000006000101234567', 'hex_codec'),
-        codecs.decode('666f6f626172', 'hex_codec')
-    )
-    assert isinstance(f, hyperframe.frame.Frame)
-
-
-def test_parse_frame_combined():
-    f = parse_frame(
-        codecs.decode('000006000101234567666f6f626172', 'hex_codec'),
-    )
-    assert isinstance(f, hyperframe.frame.Frame)

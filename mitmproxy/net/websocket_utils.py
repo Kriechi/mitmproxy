@@ -18,6 +18,12 @@ from mitmproxy.utils import bits, strutils
 
 
 def read_raw_frame(rfile):
+    """
+    Reads a full HTTP/2 frame from a file-like object.
+
+    Returns a tuple of wsproto.frame_protocol.Header, wsproto.frame_protocol.Frame, bytes
+    """
+
     consumed_bytes = b''
 
     def consume(len):
@@ -75,11 +81,11 @@ def read_raw_frame(rfile):
 
 def client_handshake_headers(version=None, key=None, protocol=None, extensions=None):
     """
-        Create the headers for a valid HTTP upgrade request. If Key is not
-        specified, it is generated, and can be found in sec-websocket-key in
-        the returned header set.
+    Create the headers for a valid HTTP upgrade request. If Key is not
+    specified, it is generated, and can be found in sec-websocket-key in
+    the returned header set.
 
-        Returns an instance of http.Headers
+    Returns an instance of http.Headers
     """
     if version is None:
         version = WEBSOCKET_VERSION
@@ -100,9 +106,9 @@ def client_handshake_headers(version=None, key=None, protocol=None, extensions=N
 
 def server_handshake_headers(client_key, protocol=None, extensions=None):
     """
-      The server response is a valid HTTP 101 response.
+    The server response is a valid HTTP 101 response.
 
-      Returns an instance of http.Headers
+    Returns an instance of http.Headers
     """
     h = http.Headers(
         connection="upgrade",
