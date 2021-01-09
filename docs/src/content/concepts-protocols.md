@@ -73,3 +73,12 @@ Users can explicitly opt into generic TCP proxying by setting the [`tcp_hosts` o
 
 - *Replay*: Client or server replay is not possible yet.
 - *Opportunistic TLS*: mitmproxy will not detect when a plaintext protocol upgrades to TLS (STARTTLS).
+
+## DNS
+
+DNS traffic can be sent to mitmproxy and manipulated while also serving HTTP,
+WebSocket, or TCP traffic. This requires your test device to also send DNS
+queries to the mitmproxy machine.
+
+Intercepting and manipulating DNS is an advanced feature and optional. It works
+independently of the normal operation of mitmproxy for the main protocols.

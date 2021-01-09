@@ -2,7 +2,7 @@
 title: "Transparent Proxying"
 menu:
     howto:
-        weight: 1
+        weight: 2
 ---
 
 # Transparent Proxying
@@ -17,14 +17,13 @@ redirection mechanism that transparently reroutes a TCP connection destined for
 a server on the Internet to a listening proxy server. This usually takes the
 form of a firewall on the same host as the proxy server -
 [iptables](http://www.netfilter.org/) on Linux or
-[pf](https://en.wikipedia.org/wiki/PF_(firewall)) on OSX. When the proxy
+[pf](https://en.wikipedia.org/wiki/PF_(firewall)) on macOS. When the proxy
 receives a redirected connection, it sees a vanilla HTTP request, without a host
 specification. This is where the second new component comes in - a host module
 that allows us to query the redirector for the original destination of the TCP
 connection.
 
-At the moment, mitmproxy supports transparent proxying on OSX Lion and above,
-and all current flavors of Linux.
+At the moment, mitmproxy supports transparent proxying on macOS and Linux.
 
 
 ## Linux
@@ -67,6 +66,12 @@ ip6tables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8
 ip6tables -t nat -A PREROUTING -i eth0 -p tcp --dport 443 -j REDIRECT --to-port 8080
 ```
 
+*Optional:* if you want to intercept DNS traffic, add these rules:
+```bash
+iptables -t nat -A PREROUTING -i eth0 -p udp --dport 53 -j REDIRECT --to-port 5353
+ip6tables -t nat -A PREROUTING -i eth0 -p udp --dport 53 -j REDIRECT --to-port 5353
+```
+
 If you want to persist this across reboots, you can use the `iptables-persistent` package (see
 [here](http://www.microhowto.info/howto/make_the_configuration_of_iptables_persistent_on_debian.html)).
 
@@ -104,6 +109,12 @@ iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 80
 iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 443 -j REDIRECT --to-port 8080
 ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 80 -j REDIRECT --to-port 8080
 ip6tables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner mitmproxyuser --dport 443 -j REDIRECT --to-port 8080
+```
+
+*Optional: if you want to intercept DNS traffic, add these rules:
+```bash
+iptables -t nat -A OUTPUT -p udp -m owner ! --uid-owner mitmproxyuser --dport 53 -j REDIRECT --to-port 5353
+ip6tables -t nat -A OUTPUT -p udp -m owner ! --uid-owner mitmproxyuser --dport 53 -j REDIRECT --to-port 5353
 ```
 
 This will redirect the packets from all users other than `mitmproxyuser` on the machine to mitmproxy. To avoid circularity, run mitmproxy as the user `mitmproxyuser`. Hence step **4** should look like:
@@ -161,7 +172,6 @@ Set the test device up to use the host on which mitmproxy is running as the defa
 [install the mitmproxy certificate authority on the test device]({{< relref "concepts-certificates" >}}).
 
 
-
 {{% note %}}
 Note that the **divert-to** rules in the pf.conf given above only apply
 to inbound traffic. **This means that they will NOT redirect traffic
@@ -177,10 +187,9 @@ for more.
 
 ## macOS
 
-OSX Lion integrated the [pf](https://en.wikipedia.org/wiki/PF_(firewall))
+Recent versions of macOS integrate the [pf](https://en.wikipedia.org/wiki/PF_(firewall))
 packet filter from the OpenBSD project, which mitmproxy uses to implement
-transparent mode on OSX. Note that this means we don't support transparent mode
-for earlier versions of OSX.
+transparent mode on macOS.
 
 ### 1. Enable IP forwarding.
 
@@ -190,7 +199,6 @@ sudo sysctl -w net.inet.ip.forwarding=1
 
 ### 2. Place the following line in a file called, say, **pf.conf**.
 
-
 ```
 rdr pass on en0 inet proto tcp to any port {80, 443} -> 127.0.0.1 port 8080
 ```
@@ -198,6 +206,11 @@ rdr pass on en0 inet proto tcp to any port {80, 443} -> 127.0.0.1 port 8080
 This rule tells pf to redirect all traffic destined for port 80 or 443
 to the local mitmproxy instance running on port 8080. You should replace
 `en0` with the interface on which your test device will appear.
+
+*Optional:* if you want to intercept DNS traffic, add this rule:
+```
+rdr pass on en0 inet proto udp to any port {53} -> 127.0.0.1 port 5353
+```
 
 ### 3. Configure pf with the rules.
 

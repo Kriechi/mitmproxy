@@ -7,6 +7,7 @@ from mitmproxy.addons import command_history
 from mitmproxy.addons import core
 from mitmproxy.addons import cut
 from mitmproxy.addons import disable_h2c
+from mitmproxy.addons import dns
 from mitmproxy.addons import export
 from mitmproxy.addons import next_layer
 from mitmproxy.addons import onboarding
@@ -37,6 +38,7 @@ def default_addons():
         command_history.CommandHistory(),
         cut.Cut(),
         disable_h2c.DisableH2C(),
+        dns.DNS(),
         export.Export(),
         next_layer.NextLayer(),
         onboarding.Onboarding(),

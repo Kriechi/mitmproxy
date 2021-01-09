@@ -20,6 +20,7 @@ menu:
 - [Sticky Cookies](#sticky-cookies)
 - [Streaming](#streaming)
 - [Upstream Certificates](#upstream-certificates)
+- [DNS Manipulation](#dns-manipulation)
 
 
 ## Anticache
@@ -394,3 +395,68 @@ certs in transparent mode.
 
 Upstream cert sniffing is on by default, and can optionally be turned off with
 the `upstream_cert` option.
+
+## DNS Manipulation
+
+### Replace replies with predefined reponses:
+  
+This expects a zone-style record definition: `google.com A 1.2.3.4`
+
+Example mitmproxy command:
+```bash
+$ mitmproxy --dns-replace 'google.com A 1.2.3.4'
+```
+
+Example Query: 
+```bash
+$ dig @127.0.0.1 -p5353 google.com
+```
+
+Response Answer: 
+```
+; <<>> DiG 9.10.6 <<>> @127.0.0.1 -p5353 google.com
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 20008
+;; flags: qr aa rd ra ad; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;google.com.                    IN      A
+
+;; ANSWER SECTION:
+google.com.             60      IN      A       1.2.3.4
+
+;; Query time: 3 msec
+;; SERVER: 127.0.0.1#5353(127.0.0.1)
+```
+
+### Blackhole incoming requests
+
+This expects simple FQDN / domain names: `google.com`
+
+Example mitmproxy command:
+```bash
+$ mitmproxy --dns-blackhole 'google.com'
+```
+
+Example Query: 
+```bash
+$ dig @127.0.0.1 -p5353 google.com
+```
+
+Response Answer: 
+```
+; <<>> DiG 9.10.6 <<>> @127.0.0.1 -p5353 google.com
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN, id: 39383
+;; flags: qr aa rd ra ad; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;google.com.                    IN      A
+
+;; Query time: 3 msec
+;; SERVER: 127.0.0.1#5353(127.0.0.1)
+```

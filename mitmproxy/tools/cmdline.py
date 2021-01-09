@@ -98,6 +98,14 @@ def common_options(parser, opts):
     group = parser.add_argument_group("Modify Headers")
     opts.make_parser(group, "modify_headers", metavar="PATTERN", short="H")
 
+    # DNS
+    group = parser.add_argument_group("DNS")
+    opts.make_parser(group, "dns_listen")
+    opts.make_parser(group, "dns_upstream")
+    opts.make_parser(group, "dns_ttl")
+    opts.make_parser(group, "dns_replace")
+    opts.make_parser(group, "dns_blackhole")
+
 
 def mitmproxy(opts):
     parser = argparse.ArgumentParser(usage="%(prog)s [options]")

@@ -2,7 +2,7 @@
 title: "Kubernetes Services"
 menu:
     howto:
-        weight: 1
+        weight: 6
 ---
 
 # Kubernetes Services

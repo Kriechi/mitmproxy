@@ -2,7 +2,7 @@
 title: "Ignoring Domains"
 menu:
     howto:
-        weight: 2
+        weight: 4
 ---
 
 # Ignoring Domains
