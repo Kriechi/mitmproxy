@@ -398,9 +398,36 @@ the `upstream_cert` option.
 
 ## DNS Manipulation
 
-### Replace replies with predefined reponses:
-  
-This expects a zone-style record definition: `google.com A 1.2.3.4`
+Operating systems typically allow the user to configure a custom DNS server (if
+not provided via DHCP network configuration). However, this almost always is
+hard-coded to port `udp/53`, which requires root priviliges to listen to. Since
+mitmproxy usually does not run with these privilegs, you need one of the
+following solutions to redirect DNS traffic into mitmproxy:
+
+mitmproxy by default listens on `udp/8053` for incoming DNS queries.
+
+You can use `ncat` (run it in a second terminal) to locally proxy all packets to
+the right destination:
+```bash
+sudo ncat --udp --keep-open --idle-timeout 5s --listen 127.0.0.1 53 --sh-exec "ncat --udp 127.0.0.1 8053"
+```
+
+Or you can use `iptables` to rewrite the destination port:
+```bash
+sudo iptables -t nat -A PREROUTING -p udp --dport 8053 -j REDIRECT --to-port 53
+```
+
+### Replace replies with predefined reponses
+
+*aka* DNS Spoofing / DNS Cache Poisoning / DNS Injection
+
+Replacing allows you to spoof or fake an DNS reply by intercepting a client DNS
+query and responding with your own crafted reply instead. The original query is
+never sent to the upstream DNS server.
+
+This expects a zone-style record definition: `google.com A 1.2.3.4`, meaning
+that every DNS query for `google.com` of type `A` will be replied to with an
+answer of `1.2.3.4` and a short TTL (which is configurable).
 
 Example mitmproxy command:
 ```bash
@@ -409,16 +436,16 @@ $ mitmproxy --dns-replace 'google.com A 1.2.3.4'
 
 Example Query: 
 ```bash
-$ dig @127.0.0.1 -p5353 google.com
+$ dig @127.0.0.1 google.com
 ```
 
 Response Answer: 
 ```
-; <<>> DiG 9.10.6 <<>> @127.0.0.1 -p5353 google.com
+; <<>> DiG 9.10.6 <<>> @127.0.0.1 google.com
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
-;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 20008
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 12345
 ;; flags: qr aa rd ra ad; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
 
 ;; QUESTION SECTION:
@@ -428,10 +455,14 @@ Response Answer:
 google.com.             60      IN      A       1.2.3.4
 
 ;; Query time: 3 msec
-;; SERVER: 127.0.0.1#5353(127.0.0.1)
+;; SERVER: 127.0.0.1#53(127.0.0.1)
 ```
 
 ### Blackhole incoming requests
+
+Blackhole / Sink Hole DNS queris by replying with an `NXDOMAIN` error. This
+causes the client to "think" that no such domain is known and no IP could be
+found for this query.
 
 This expects simple FQDN / domain names: `google.com`
 
@@ -442,21 +473,21 @@ $ mitmproxy --dns-blackhole 'google.com'
 
 Example Query: 
 ```bash
-$ dig @127.0.0.1 -p5353 google.com
+$ dig @127.0.0.1 google.com
 ```
 
 Response Answer: 
 ```
-; <<>> DiG 9.10.6 <<>> @127.0.0.1 -p5353 google.com
+; <<>> DiG 9.10.6 <<>> @127.0.0.1 google.com
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
-;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN, id: 39383
+;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN, id: 12345
 ;; flags: qr aa rd ra ad; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 0
 
 ;; QUESTION SECTION:
 ;google.com.                    IN      A
 
 ;; Query time: 3 msec
-;; SERVER: 127.0.0.1#5353(127.0.0.1)
+;; SERVER: 127.0.0.1#53(127.0.0.1)
 ```
