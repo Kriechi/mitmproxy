@@ -91,7 +91,7 @@ class DNS:
 
     def load(self, loader):
         loader.add_option(
-            "dns_listen", str, "127.0.0.1:5353",
+            "dns_listen", str, "127.0.0.1:8053",
             "Listen on this host:port for DNS queries.",
         )
         loader.add_option(
